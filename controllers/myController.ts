@@ -33,3 +33,34 @@ export const getAllTasks = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'error fetching tasks' });
     }
 };
+
+export const updateTask = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { title, completed } = req.body;
+
+    try {
+        const result = await pool.query('UPDATE tasks SET title = $1, completed = $2 WHERE id = $3 RETURNING *',
+        [title, completed, id]
+        );
+        const updatedTask = result.rows;
+        res.status(201).json(updatedTask);
+    } catch (error) {
+        console.error('error updating task', error);
+        res.status(500).json({ error: 'error updating task' });
+    }
+};
+
+export const deleteTask = async(req: Request, res: Response) => {
+    const { id } = req.params;
+
+    if(isNaN(parseInt(id, 10))) {
+        return res.status(400).json({ error: 'Invalid task id' });
+    }
+    try {
+        await pool.query('DELETE FROM tasks WHERE id = $1', [id]);
+        res.status(200).json({ message: 'Task deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'error deleting task' });
+    }
+};
